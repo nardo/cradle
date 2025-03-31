@@ -1,0 +1,15 @@
+build*
+*/build*
+*.a
+*.DS_Store
+*.obj
+*.o
+.vs/*
+.idea/*
+*.tlog
+Debug/*
+*/Debug/*
+/lib/*
+*/*.log
+*/*.jrn
+*/*.jbn
