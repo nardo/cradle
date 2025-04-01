@@ -614,19 +614,28 @@ private:
     }
     
     void _emit_vertex_properties(const vec2 *_v) {}
+    
     void _emit_vertex_properties(const RenderVertex2T *_v)
     {
         glTexCoord2f(_v->t.x, _v->t.y);
     }
+    
+    void _emit_vertex_properties(const RenderVertex3T *_v)
+    {
+        glTexCoord2f(_v->t.x, _v->t.y);
+    }
+    
     void _emit_vertex_properties(const RenderVertex2TT *_v)
     {
         glTexCoord2f(_v->t1.x, _v->t1.y);
         glMultiTexCoord2f(GL_TEXTURE1, _v->t2.x, _v->t2.y);
     }
+    
     void _emit_vertex_properties(const RenderVertex2C *_v)
     {
         glColor4ub(_v->c.red, _v->c.green, _v->c.blue, _v->c.alpha);
     }
+    
     template<class V> void _draw_gl_primitive(V *_verts, uint32 _vert_count, uint32 _gl_primitive)
     {
         draw_prepare();
@@ -758,7 +767,7 @@ public:
     }
 
 
-    void draw_bitmap_stretch_SR( TextureHandle &texture, Point topLeft, Point topRight, Point bottomLeft, Point bottomRight, Rect srcRect, BitmapFlipMode in_flip = BitmapFlip_None, GFXTextureFilterType filter = GFXTextureFilterPoint, bool in_wrap = true)
+    void draw_bitmap_stretch_SR( TextureHandle &texture, Point topLeft, Point topRight, Point bottomLeft, Point bottomRight, Rect srcRect, float32 depth = 0.0f, BitmapFlipMode in_flip = BitmapFlip_None, GFXTextureFilterType filter = GFXTextureFilterPoint, bool in_wrap = true)
     {
         float32 texLeft   = srcRect.min.x;
        float32 texRight  = srcRect.max.x;
@@ -796,17 +805,17 @@ public:
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                 break;
         }*/
-        RenderVertex2T verts[4];
+        RenderVertex3T verts[4];
         
         const float32 fillConv = 0; //mDevice->getFillConventionOffset();
-       verts[0].p.set( topLeft.x     - fillConv, topLeft.y     - fillConv);
+       verts[0].p.set( topLeft.x     - fillConv, topLeft.y     - fillConv, depth);
         verts[0].t.set(texLeft, texTop);
-        verts[1].p.set( topRight.x    - fillConv, topRight.y    - fillConv);
+        verts[1].p.set( topRight.x    - fillConv, topRight.y    - fillConv, depth);
         verts[1].t.set(texRight, texTop);
-        verts[2].p.set( bottomRight.x  - fillConv, bottomRight.y  - fillConv);
+        verts[2].p.set( bottomRight.x  - fillConv, bottomRight.y  - fillConv, depth);
         verts[2].t.set(texRight, texBottom);
         verts[3].t.set(texLeft, texBottom);
-        verts[3].p.set( bottomLeft.x - fillConv, bottomLeft.y - fillConv );
+        verts[3].p.set( bottomLeft.x - fillConv, bottomLeft.y - fillConv , depth);
         
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         set_blend_mode(BlendModeBlend);

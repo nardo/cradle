@@ -55,7 +55,7 @@ public:
            format = GL_RGB;
        else if(texSurface->format == SDL_PIXELFORMAT_RGBA32 || texSurface->format == SDL_PIXELFORMAT_RGBA8888)
            format = GL_RGBA;
-       else if(texSurface->format == SDL_PIXELFORMAT_XRGB8888)
+       else if(texSurface->format == SDL_PIXELFORMAT_XRGB8888 || texSurface->format == SDL_PIXELFORMAT_ARGB8888)
        {
            uint8 *srcPixels = (uint8 *) texSurface->pixels;
            modPixels = new uint8[texSurface->w * texSurface->h * 4];
