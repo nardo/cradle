@@ -107,6 +107,7 @@ public:
     virtual void render() {}
     virtual void idle(uint32 timeDelta) {}
     virtual void onActivate() {}
+    virtual void onDeactivate() {}
     virtual void onMouseDown(int32 x, int32 y) {}
     virtual void onMouseUp(int32 x, int32 y) {}
     virtual void onRightMouseDown(int32 x, int32 y) {}
@@ -258,6 +259,8 @@ public:
 
     void activate()
     {
+        if(A.UI.current)
+            A.UI.current->onDeactivate();
        A.UI.current = this;
        onActivate();
     }
