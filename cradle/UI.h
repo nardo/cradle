@@ -204,10 +204,10 @@ public:
     static void renderCurrent(uint32 integerTime)
     {
         A.UI.lastFrameStep = integerTime;
-        A.P.set_viewport(0, 0, A.UI.windowWidth, A.UI.windowHeight);
+        A.C.set_viewport(0, 0, A.UI.windowWidth, A.UI.windowHeight);
         int c = 0;
-        A.P.color(ColorI(c,c,c,255));
-        A.P.clear();
+        A.C.color(ColorI(c,c,c,255));
+        A.C.clear();
 
        float32 x, y, vw, vh;
         uint32 vw_i, vh_i;
@@ -220,7 +220,7 @@ public:
             A.UI.effectsSurface->resize(vw_i, vh_i);
             A.UI.screenDeformer.updateScreenExtent(vw_i, vh_i);
         }
-        A.P.set_viewport(x, y, vw, vh);
+        A.C.set_viewport(x, y, vw, vh);
         
         float32 projFOV = 60.f;
         float32 projNear = 100.f;  // Should adjust to actual screen dimension
@@ -237,10 +237,10 @@ public:
         float32 projOffset = ((A.UI.canvasWidth * 0.5f) / aspect) / tan(DegToRad(projFOV * 0.5));
         mat4 gl_proj = mat4::frustum(left, right, bottom, top, projNear, projFar);
         
-        A.P.projection.set(gl_proj);
+        A.C.projection.set(gl_proj);
                            
         setModelView();
-        A.P.colorf(1,1,1);
+        A.C.colorf(1,1,1);
 
        if(A.UI.current)
           A.UI.current->render();
@@ -252,9 +252,9 @@ public:
 
         double aspect = double(A.UI.canvasWidth) / double(A.UI.canvasHeight);
         float32 projOffset = ((A.UI.canvasWidth * 0.5f) / aspect) / tan(DegToRad(projFOV * 0.5));
-        A.P.modelView.identity();
-        A.P.modelView.scale(1.f,-1.f,1.f);
-        A.P.modelView.translate(vec3(-(A.UI.canvasWidth * 0.5f), -(A.UI.canvasHeight * 0.5f), -projOffset));
+        A.C.modelView.identity();
+        A.C.modelView.scale(1.f,-1.f,1.f);
+        A.C.modelView.translate(vec3(-(A.UI.canvasWidth * 0.5f), -(A.UI.canvasHeight * 0.5f), -projOffset));
     }
 
     void activate()
@@ -269,13 +269,13 @@ public:
     {
 #ifndef AC_DEDICATED
        float32 scaleFactor = size / 120.0f;
-        A.P.modelView.push();
-        A.P.modelView.translate(vec3(x, y + size, 0));
-        A.P.modelView.scale(vec3(scaleFactor, -scaleFactor, 1));
+        A.C.modelView.push();
+        A.C.modelView.translate(vec3(x, y + size, 0));
+        A.C.modelView.scale(vec3(scaleFactor, -scaleFactor, 1));
         float32 offset = 0;
        for(int32 i = 0; string[i]; i++)
            offset += StrokeFont::strokeCharacter(string[i], offset);
-        A.P.modelView.pop();
+        A.C.modelView.pop();
 #endif
     }
     static void drawRightString(int32 x, int32 y, int32 size, const char *string)

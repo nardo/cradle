@@ -1,4 +1,4 @@
-// The cradle library - copyright KAGR LLC. The use of this source code is governed by the license agreement(s) described in the "license.txt" file in this directory.
+// The vectrex library - copyright KAGR LLC. The use of this source code is governed by the license agreement(s) described in the "license.txt" file in this directory.
 
 #pragma warning( push )
 #pragma warning( disable : 4305)
@@ -50,7 +50,7 @@ struct StrokeFont {
                 for (j = stroke->num_coords - 1, coord = stroke->coord + 1; j > 0;
                      j--, coord++) {
                     Point next(coord->x + xOffset, coord->y);
-                    A.P.draw_line(last, next);
+                    A.C.draw_line(last, next);
                     last = next;
                     //glVertex2f(coord->x, coord->y);
                 }

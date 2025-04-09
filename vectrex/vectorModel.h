@@ -1,4 +1,4 @@
-// The cradle library - copyright KAGR LLC. The use of this source code is governed by the license agreement(s) described in the "license.txt" file in this directory.
+// The vectrex library - copyright KAGR LLC. The use of this source code is governed by the license agreement(s) described in the "license.txt" file in this directory.
 
 class VectorModelInstance;
 
@@ -71,7 +71,7 @@ static void renderPolyLine(const PolyLine & polyLine, const ColorI & col, bool e
 {
    if(col.alpha)
    {
-       A.P.color(col);
+       A.C.color(col);
        
       //glColor4ub(col.red, col.green, col.blue, col.alpha);
 /*
@@ -90,17 +90,17 @@ static void renderPolyLine(const PolyLine & polyLine, const ColorI & col, bool e
          for(int32 i = 0; i < polyLine.mExtruded.size(); i++)
             glVertex2f(polyLine.mExtruded[i].x, polyLine.mExtruded[i].y);
       }*/
-       A.P.draw_prepare();
+       A.C.draw_prepare();
        
        glBegin(GL_LINES);
        for(int32 i = 0; i < polyLine.mExtruded.size(); i += 3)
        {
-           A.P._glVertex2fXF(polyLine.mExtruded[i].x, polyLine.mExtruded[i].y);
-           A.P._glVertex2fXF(polyLine.mExtruded[i+1].x, polyLine.mExtruded[i+1].y);
-           A.P._glVertex2fXF(polyLine.mExtruded[i+1].x, polyLine.mExtruded[i+1].y);
-           A.P._glVertex2fXF(polyLine.mExtruded[i+2].x, polyLine.mExtruded[i+2].y);
-           A.P._glVertex2fXF(polyLine.mExtruded[i+2].x, polyLine.mExtruded[i+2].y);
-           A.P._glVertex2fXF(polyLine.mExtruded[i].x, polyLine.mExtruded[i].y);
+           A.C._glVertex2fXF(polyLine.mExtruded[i].x, polyLine.mExtruded[i].y);
+           A.C._glVertex2fXF(polyLine.mExtruded[i+1].x, polyLine.mExtruded[i+1].y);
+           A.C._glVertex2fXF(polyLine.mExtruded[i+1].x, polyLine.mExtruded[i+1].y);
+           A.C._glVertex2fXF(polyLine.mExtruded[i+2].x, polyLine.mExtruded[i+2].y);
+           A.C._glVertex2fXF(polyLine.mExtruded[i+2].x, polyLine.mExtruded[i+2].y);
+           A.C._glVertex2fXF(polyLine.mExtruded[i].x, polyLine.mExtruded[i].y);
 
        }
 
@@ -122,23 +122,23 @@ static void renderPolyLine(const PolyLine & polyLine, const ColorI & col, const 
 {
    if(col.alpha)
    {
-       if(A.P.draw_outline)
+       if(A.C.draw_outline)
        {
            glDisable(GL_TEXTURE_2D);
            float32 numVerts = polyLine.mExtruded.size();
-           A.P.draw_prepare();
+           A.C.draw_prepare();
            
            glBegin(GL_LINES);
            for(int32 i = 0; i < polyLine.mExtruded.size(); i += 3)
            {
                float32 inten = ((i+2) / numVerts);
                glColor4f(inten, inten, inten, 1);
-               A.P._glVertex2fXF(polyLine.mExtruded[i].x, polyLine.mExtruded[i].y);
-               A.P._glVertex2fXF(polyLine.mExtruded[i+1].x, polyLine.mExtruded[i+1].y);
-               A.P._glVertex2fXF(polyLine.mExtruded[i+1].x, polyLine.mExtruded[i+1].y);
-               A.P._glVertex2fXF(polyLine.mExtruded[i+2].x, polyLine.mExtruded[i+2].y);
-               A.P._glVertex2fXF(polyLine.mExtruded[i+2].x, polyLine.mExtruded[i+2].y);
-               A.P._glVertex2fXF(polyLine.mExtruded[i].x, polyLine.mExtruded[i].y);
+               A.C._glVertex2fXF(polyLine.mExtruded[i].x, polyLine.mExtruded[i].y);
+               A.C._glVertex2fXF(polyLine.mExtruded[i+1].x, polyLine.mExtruded[i+1].y);
+               A.C._glVertex2fXF(polyLine.mExtruded[i+1].x, polyLine.mExtruded[i+1].y);
+               A.C._glVertex2fXF(polyLine.mExtruded[i+2].x, polyLine.mExtruded[i+2].y);
+               A.C._glVertex2fXF(polyLine.mExtruded[i+2].x, polyLine.mExtruded[i+2].y);
+               A.C._glVertex2fXF(polyLine.mExtruded[i].x, polyLine.mExtruded[i].y);
            }
            glEnd();
            glEnable(GL_TEXTURE_2D);
@@ -147,8 +147,8 @@ static void renderPolyLine(const PolyLine & polyLine, const ColorI & col, const 
        {
            glColor4ub(col.red, col.green, col.blue, col.alpha);
            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-           A.P.set_blend_mode(BlendModeBlend);
-           A.P.draw_prepare();
+           A.C.set_blend_mode(BlendModeBlend);
+           A.C.draw_prepare();
            
            glBegin(polyLine.mExtrudedTriStrip ? GL_TRIANGLE_STRIP : GL_TRIANGLES);
            if(texGenLen)
@@ -158,7 +158,7 @@ static void renderPolyLine(const PolyLine & polyLine, const ColorI & col, const 
                    //Point texCoord = texGen * polyLine.mTexCoords[i];
                    Point texCoord = polyLine.mTexCoords[i];
                    glTexCoord2f(texCoord.x, texCoord.y);
-                   A.P._glVertex2fXF(polyLine.mExtruded[i].x, polyLine.mExtruded[i].y);
+                   A.C._glVertex2fXF(polyLine.mExtruded[i].x, polyLine.mExtruded[i].y);
                }
            }
            else
@@ -167,12 +167,12 @@ static void renderPolyLine(const PolyLine & polyLine, const ColorI & col, const 
                {
                    Point texCoord = texGen * polyLine.mExtruded[i];
                    glTexCoord2f(texCoord.x, texCoord.y);
-                   A.P._glVertex2fXF(polyLine.mExtruded[i].x, polyLine.mExtruded[i].y);
+                   A.C._glVertex2fXF(polyLine.mExtruded[i].x, polyLine.mExtruded[i].y);
                }
            }
            glEnd();
            
-           A.P.set_blend_mode(BlendModeNone);
+           A.C.set_blend_mode(BlendModeNone);
        }
    }
 }
@@ -351,13 +351,13 @@ public:
              break;
           }
 
-          // AthenaCoreShape/primitve types:
-          case 'LINE':   // AthenaCoreLine
-          case 'RECT':   // AthenaCoreRect
-          case 'CIRC':   // AthenaCoreCircle
-          case 'ELIP':   // AthenaCoreEllipse
-          case 'STAR':   // AthenaCoreStar
-          case 'POLY':   // AthenaCorePolygon
+          // VectorPrimitive types:
+          case 'LINE':   // LinePrimitive
+          case 'RECT':   // RectPrimitive
+          case 'CIRC':   // CirclePrimitive
+          case 'ELIP':   // EllipsePrimitive
+          case 'STAR':   // StarPrimitive
+          case 'POLY':   // PolygonPrimitive
           {
              mPrimitiveType = type;
 
@@ -490,10 +490,10 @@ public:
           if(view)
              transform.mul(*view);
 
-          A.P.modelView.push();
+          A.C.modelView.push();
            mat4 m;
            transform.to_mat4_transpose(m);
-          A.P.modelView.mul(m);
+          A.C.modelView.mul(m);
        }
 
        // Update geometry:
@@ -578,7 +578,7 @@ public:
 
        if(!mTransformIdentity)
        {
-          A.P.modelView.pop();
+          A.C.modelView.pop();
        }
     }
 

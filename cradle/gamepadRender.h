@@ -111,19 +111,19 @@ static void renderGamepadButton(float32 x, float32 y, uint32 buttonIndex, uint32
         }
         Color c(d->color[0], d->color[1], d->color[2]);
         
-        A.P.color(c * 0.5f);
+        A.C.color(c * 0.5f);
         switch(d->buttonType)
         {
             case ButtonTypeCircle:
-                A.P.fill_circle(Point(x + 8, y + 8), 8);
+                A.C.fill_circle(Point(x + 8, y + 8), 8);
                 glColor3f(1,1,1);
-                A.P.draw_circle(Point(x + 8, y + 8), 8);
+                A.C.draw_circle(Point(x + 8, y + 8), 8);
                 UserInterface::drawStringf(x + 4, y + 2, d->fontSize, d->text);
                 break;
             case ButtonTypeRect:
-                A.P.draw_rect(Point(x, y), Point(20, 16));
+                A.C.draw_rect(Point(x, y), Point(20, 16));
                 glColor3f(1,1,1);
-                A.P.draw_rect(Point(x, y), Point(20, 16));
+                A.C.draw_rect(Point(x, y), Point(20, 16));
                 UserInterface::drawStringf(x + 4, y + 2, d->fontSize, d->text);
                 break;
         }

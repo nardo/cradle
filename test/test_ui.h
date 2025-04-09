@@ -1,24 +1,52 @@
 // CradleTest - copyright KAGR LLC. The use of this source code is governed by the license agreement(s) described in the "license.txt" file in this directory.
 
-class CradleTestUserInterface : public UserInterface
+class TestUserInterface : public UserInterface
 {
+public:
+    void render()
+    {
+        A.C.colorf(1,1,1);
+        
+        drawCenteredString(10, 15, "Cradle Test - '1' network - '2' gfx");
+    }
+    void onKeyDown(uint32 key)
+    {
+        if(key == '1')
+            A.UITestNetGame.activate();
+        else if(key == '2')
+            A.UITestGFX.activate();
+    }
+};
+
+class TestNetGameUserInterface : public TestUserInterface
+{
+    typedef TestUserInterface Parent;
     test_game *game[2];
     vec2 game_pos[2];
     vec2 game_ext[2];
     uint32 next_port;
 public:
-    CradleTestUserInterface()
+    TestNetGameUserInterface()
     {
         game[0] = game[1] = 0;
         next_port = 28000;
     }
-    ~CradleTestUserInterface()
+    ~TestNetGameUserInterface()
     {
     }
     
     void onActivate()
     {
         restart_games(true);
+    }
+    
+    void onDeactivate()
+    {
+        if(game[0])
+            delete game[0];
+        if(game[1])
+            delete game[1];
+        game[0] = game[1] = 0;
     }
     
     void calc_game_frames()
@@ -31,11 +59,13 @@ public:
     }
     void render()
     {
-        glColor3f(1,1,1);
+        Parent::render();
+        
+        A.C.colorf(1,1,1);
         
         uint32 y = A.UI.canvasHeight - 20;
         
-        drawCenteredString(y, 11, "Cradle Test - 'S' restarts server/client, 'C' restarts client/client");
+        drawCenteredString(y, 11, "'S' restarts server/client, 'C' restarts client/client");
         calc_game_frames();
         
         if(game[0])
@@ -60,13 +90,10 @@ public:
             restart_games(true);
         else if(key == 'c')
             restart_games(false);
+        else
+            Parent::onKeyDown(key);
     }
-    
-    void onKeyUp(uint32 key)
-    {
         
-    }
-    
     void onMouseDown(int32 x, int32 y)
     {
         vec2 mousePos(x,y);
@@ -109,4 +136,4 @@ public:
         game[1] = new test_game(false, ping_address);
         game[1]->_net_interface->bind(interface_bind_address1);
     }
-} UITest;
+} UITestNetGame;

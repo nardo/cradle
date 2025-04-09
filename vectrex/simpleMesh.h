@@ -1,4 +1,4 @@
-// The cradle library - copyright KAGR LLC. The use of this source code is governed by the license agreement(s) described in the "license.txt" file in this directory.
+// The vectrex library - copyright KAGR LLC. The use of this source code is governed by the license agreement(s) described in the "license.txt" file in this directory.
 
 class SimpleMesh
 {
@@ -67,7 +67,7 @@ public:
        if(col.alpha && mVerts.size())
        {
           glColor4ub(col.red, col.green, col.blue, col.alpha);
-           A.P.draw_prepare();
+           A.C.draw_prepare();
           switch(mType)
           {
              case SimpleMesh::kTriangleList:  glBegin(GL_TRIANGLES);        break;
@@ -80,13 +80,13 @@ public:
              for(int32 i = 0; i < mVerts.size(); i++)
              {
                 glTexCoord2f(mTexCoords[i].x, mTexCoords[i].y);
-                 A.P._glVertex2fXF(mVerts[i].x, mVerts[i].y);
+                 A.C._glVertex2fXF(mVerts[i].x, mVerts[i].y);
              }
           }
           else
           {
              for(int32 i = 0; i < mVerts.size(); i++)
-                 A.P._glVertex2fXF(mVerts[i].x, mVerts[i].y);
+                 A.C._glVertex2fXF(mVerts[i].x, mVerts[i].y);
           }
           glEnd();
        }

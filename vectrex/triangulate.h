@@ -1,4 +1,4 @@
-// The cradle library - copyright KAGR LLC. The use of this source code is governed by the license agreement(s) described in the "license.txt" file in this directory.
+// The vectrex library - copyright KAGR LLC. The use of this source code is governed by the license agreement(s) described in the "license.txt" file in this directory.
 
 // a polygon/contour and a series of triangles.
 typedef Point PointType;

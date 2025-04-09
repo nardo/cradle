@@ -110,19 +110,19 @@ public:
 
         vec2 offset = frame_pos;
         vec2 scale = frame_ext;
-        A.P.colorf(1,1,0);
-        A.P.fill_rect(offset, scale);
+        A.C.colorf(1,1,0);
+        A.C.fill_rect(offset, scale);
         
         
         // first draw all the _buildings.
         for(int32 i = 0; i < _buildings.size(); i++)
         {
             building *b = _buildings[i];
-            A.P.colorf(1,0,0);
+            A.C.colorf(1,0,0);
             vec2 ul(b->upper_left.x, b->upper_left.y);
             vec2 lr(b->lower_right.x, b->lower_right.y);
             
-            A.P.fill_rect(offset + ul * scale, (lr - ul) * scale);
+            A.C.fill_rect(offset + ul * scale, (lr - ul) * scale);
         }
         
         // then render the alpha blended circle around the player,
@@ -130,36 +130,36 @@ public:
        if(_client_player)
         {
             position p = _client_player->_render_pos;
-            A.P.set_blend_mode(BlendModeBlend);
-            A.P.colorf(0.5f, 0.5f, 0.5f, 0.65f);
-            A.P.fill_circle(offset + vec2(p.x * scale.x, p.y * scale.y), 0.25f * scale.x);
-            A.P.set_blend_mode(BlendModeNone);
+            A.C.set_blend_mode(BlendModeBlend);
+            A.C.colorf(0.5f, 0.5f, 0.5f, 0.65f);
+            A.C.fill_circle(offset + vec2(p.x * scale.x, p.y * scale.y), 0.25f * scale.x);
+            A.C.set_blend_mode(BlendModeNone);
         }
 
         // last, draw all the _players in the game.
         for(int32 i = 0; i < _players.size(); i++)
         {
             player *p = _players[i];
-            A.P.colorf(0,0,0);
+            A.C.colorf(0,0,0);
             vec2 outline_half_ext(0.012f, 0.012f);
             vec2 half_ext(0.01f, 0.01f);
             vec2 rp(p->_render_pos.x, p->_render_pos.y);
-            A.P.fill_rect(offset + (rp - outline_half_ext) * scale, outline_half_ext * scale * 2);
+            A.C.fill_rect(offset + (rp - outline_half_ext) * scale, outline_half_ext * scale * 2);
                         
             switch(p->_player_type)
             {
                 case player::player_type_ai:
                 case player::player_type_ai_dummy:
-                    A.P.colorf(0, 0, 1);
+                    A.C.colorf(0, 0, 1);
                     break;
                 case player::player_type_client:
-                    A.P.colorf(0.5, 0.5, 1);
+                    A.C.colorf(0.5, 0.5, 1);
                     break;
                 case player::player_type_my_client:
-                    A.P.colorf(1, 1, 1);
+                    A.C.colorf(1, 1, 1);
                     break;
             }
-            A.P.draw_rect(offset + (rp - half_ext) * scale, half_ext * scale * 2);
+            A.C.draw_rect(offset + (rp - half_ext) * scale, half_ext * scale * 2);
         }
     }
 };

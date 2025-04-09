@@ -6,6 +6,7 @@ target_link_libraries(CradleTest
 	libtomcrypt
 	SDL3::SDL3-static
 	SDL3_image::SDL3_image
+	decomposition_library
 )
 
 

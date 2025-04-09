@@ -46,7 +46,7 @@ static const struct
 #include "core/platform.h"
 
 // Cradle uses some GL extensions, so include those here
-#include "cradle/gl_extensions.h"
+#include "platforms/gl_extensions.h"
 
 // For audio playback, Cradle uses the OpenAL audio library in order to allow for 3D positional sound
 
@@ -57,9 +57,12 @@ static const struct
 #include <openal/alc.h>
 #include <openal/al.h>
 #else
-#include "engine/platforms/openal/alc.h"
-#include "engine/platforms/openal/al.h"
+#include "platforms/openal/alc.h"
+#include "platforms/openal/al.h"
 #endif
+
+#include "decomposition-library/include/decomposition.h"
+using namespace decomposition;
 
 // Here's where things get fun...
 // Large C++ projects have a tendency to be not very fun to work with in no small part due to excruciatingly long build times, as well as organizationally - classes are typically split into declaration and implementation files (.h/.cpp), and each .cpp has to include all the .h files for other classes referenced in an implementation. As the size of the project grows, each .cpp compile can include tens or hundreds of thousands of lines of header code, meaning that a change in a commonly used header can trigger a recompile of many files, each of which includes a ton of code.
@@ -113,6 +116,7 @@ struct cradle_test
     // The cradle classes provide core rendering and input layering services on top of SDL. This layering is necessary for two key reasons:
     
     // First, while SDL does a fantastic job of abstracting core hardware platform differences in a single clean API, it still has issues with different rendering options - GL ES2 for the web and mobile, OpenGL for computers, etc., which have varying approaches to shaders and vertex buffering. The CorePlatform class and singleton instanced as "P" (see engine/platform.h) aims to abstract all the various rendering APIs into a single clean interface for cradle apps.
+    #include "vectrex/vectrex.h"
     #include "cradle/cradle.h"
 
     // Second, cradle add journaling functionality to provide recording and deterministic playback of application runs, which makes tracking down certain types of bugs much easier. SDL events received in SDL_AppEvent (declared at the end of this file) are passed into the CorePlatform object (P) and from there into the global journal object (G) defined in test_journal.h.
@@ -156,7 +160,8 @@ struct cradle_test
     
     // The CradleTestUserInterface class is a simple "one screen" UI for CradleTest. CradleTestUserInterface manages two "game" instances - one rendered in the left "pane" and one in the right. The UI routes mouse events in either pane to the affected game instance, and uses keyboard inputs to select which type of game (client or server) is in each pane.
     #include "test_ui.h"
-    
+    #include "test_gfx.h"
+
     /// current_time stores the current system time in order to track elapsed time between calls to idle()
     time current_time;
     

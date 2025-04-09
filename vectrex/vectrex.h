@@ -1,0 +1,28 @@
+// The vectrex library - copyright KAGR LLC. The use of this source code is governed by the license agreement(s) described in the "license.txt" file in this directory.
+
+class Stream;
+
+#include "color.h"
+#include "lineSegment.h"
+#include "plane2d.h"
+#include "rect.h"
+#include "matrix2d.h"
+#include "tween.h"
+#include "animation.h"
+#include "polyBuilder.h"
+#include "bspTree.h"
+#include "polyLine.h"
+#include "textureManager.h"
+#include "gfxUtil.h"
+#include "vectorPrimitive.h"
+#include "simpleMesh.h"
+#include "vectorModel.h"
+#include "triangulate.h"
+#include "SweptEllipsoid.h"
+#include "renderSurface.h"
+#include "canvas.h"
+#include "surfaceDeformer.h"
+#include "strokeFont.h"
+#include "poly_tree.h"
+#include "polytron.h"
+#include "polytron_outline.h"

@@ -1,52 +1,3 @@
-// The cradle library - copyright KAGR LLC. The use of this source code is governed by the license agreement(s) described in the "license.txt" file in this directory.
-
-enum RMatrixMode {
-    RProjection = 0,
-    RModelView = 1,
-};
-
-class TextureObject : public ref_object
-{
-    public:
-    GLuint         m_textureID;   // The GL texture ID
-   uint32         m_width;       // Image width
-   uint32         m_height;      // Image height
-   uint32         m_format;      // Image format type (GL_RGB, GL_RGBA)
-   uint32         m_type;        // Data type for pixel data (GL_BYTE, ...)
-   uint32         m_target;      // GL_TEXTURE_2D, ...
-    void glSet(uint32 index)
-    {
-        if(index == 0)
-            glBindTexture(GL_TEXTURE_2D, m_textureID);
-        else
-            glBindTexture(GL_TEXTURE0 + index, m_textureID);
-
-        // sets this as the active texture on unit index
-    }
-    void release()
-    {
-        if(m_textureID)
-        {
-            glDeleteTextures(1, &m_textureID);
-            m_textureID = 0;
-        }
-    }
-    TextureObject()
-    {
-        m_textureID = 0;
-        m_width = m_height = 0;
-    }
-    ~TextureObject()
-    {
-        if(m_textureID)
-            release();
-    }
-    uint32 getWidth() { return m_width; }
-    uint32 getHeight() { return m_height; }
-};
-
-typedef ref_ptr<TextureObject> TextureHandle;
-
 
 struct RenderVertex2
 {
@@ -113,12 +64,9 @@ enum BlendMode
     BlendModeAdd,
 };
 
-struct CorePlatform
+struct canvas
 {
 private:
-    SDL_GLContext gl_context;
-    SDL_Window *window;
-    SDL_Renderer *renderer;
     ColorI draw_color;
     SDL_FColor draw_color_sdl;
     SDL_Rect viewport;
@@ -128,19 +76,8 @@ private:
     bool dirty_viewport;
     bool dirty_blend;
     BlendMode blend_mode;
-    cradle_journal *_journal;
-    
-    struct GamepadRef
-    {
-        SDL_Gamepad *gamepad;
-        uint32 gamepad_id;
-    };
-    
-    array<GamepadRef> gamepads;
 public:
-    bool fullscreen;
     bool draw_outline;
-    
     MatrixStack modelView;
     MatrixStack projection;
 
@@ -164,239 +101,30 @@ public:
        GFXTextureFilter_COUNT*/
     };
 
-    CorePlatform() : draw_color(0,0,0,255)
+    canvas() : draw_color(0,0,0,255)
     {
-        _journal = NULL;
         draw_outline = false;
         blend_mode = BlendModeNone;
         dirty_blend = false;
         dirty_viewport = false;
-        fullscreen = false;
-        window = 0;
-        renderer = 0;
         draw_matrix = mat4::identity();
 
-        gl_context = NULL;
     }
-    bool init(const char *window_name, bool _fullscreen, cradle_journal *j)
+    
+    void set_viewport(float32 x, float32 y, float32 w, float32 h)
     {
-        _journal = j;
-#if defined (PLATFORM_WEB)
-        if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) {
-            return false;
-        }
-        if(!SDL_GL_LoadLibrary(NULL))
-        {
-            logf(cradle, ("Error loading GL library."));
-            return false;
-        }
-        window = SDL_CreateWindow("Athena Core", A.UI.windowWidth, A.UI.windowHeight, SDL_WINDOW_OPENGL);
-        //SDL_SetWindowPosition(A.G.window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-        gl_context = SDL_GL_CreateContext(window);
-        if (gl_context == nullptr)
-        {
-            logf(cradle, ("Error: SDL_GL_CreateContext(): %s\n", SDL_GetError()));
-            return SDL_APP_FAILURE;
-        }
-#else
-        SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI, "1");
-        SDL_SetHint(SDL_HINT_JOYSTICK_ENHANCED_REPORTS, "auto");
-        SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_STEAM, "1");
-        SDL_SetHint(SDL_HINT_JOYSTICK_ROG_CHAKRAM, "1");
-        SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
-        SDL_SetHint(SDL_HINT_JOYSTICK_LINUX_DEADZONES, "1");
-        if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_GAMEPAD))
-        {
-            logf(cradle, ("Error: SDL/GL init failed: %s.", SDL_GetError()));
-            return false;
-        }
-        if(SDL_AddGamepadMappingsFromFile("gamecontrollerdb.txt") == -1){
-            logf(cradle, ("Error: SDL Gamepad Mappings failed: %s.", SDL_GetError()));
-        }
-        SDL_SetGamepadEventsEnabled(true);
-
-
-        if(!SDL_GL_LoadLibrary(NULL))
-        {
-            logf(cradle, ("Error loading GL library."));
-            return false;
-        }
-        if((window = SDL_CreateWindow(window_name, A.UI.windowWidth, A.UI.windowHeight, SDL_WINDOW_OPENGL|SDL_WINDOW_RESIZABLE)) == NULL || (gl_context = SDL_GL_CreateContext(window)) == nullptr)
-        {
-            logf(cradle, ("Error: SDL/GL init failed: %s.", SDL_GetError()));
-            return false;
-        }
-        gl_context = SDL_GL_CreateContext(window);
-        if (gl_context == nullptr)
-        {
-            logf(cradle, ("Error: SDL_GL_CreateContext(): %s\n", SDL_GetError()));
-            return SDL_APP_FAILURE;
-        }
-        SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-        SDL_GL_SetSwapInterval(1); // Enable vsync
-        SDL_SetWindowResizable(window, true);
-        SDL_ShowWindow(window);
-        fullscreen = _fullscreen;
-        if (_fullscreen)
-            SDL_SetWindowFullscreen(window, true);
-#endif
-        loadGLExtensions();
-        SDL_GL_MakeCurrent(window, gl_context);
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        glLineWidth(2);
+        dirty_viewport = true;
         
-        int w, h;
-        get_canvas_size(w, h);
-        A.UI.windowWidth = w;
-        A.UI.windowHeight = h;
-
-        return true;
+        viewport.x = x;
+        viewport.y = y;
+        viewport.w = w;
+        viewport.h = h;
+        //SDL_SetRenderViewport(renderer, &viewport);
+        glViewport(x, y, w, h);
     }
     
-    void set_mouse_lock(bool lock)
-    {
-        SDL_SetWindowRelativeMouseMode(window, lock);
-    }
     
-    SDL_AppResult process_event(SDL_Event *event)
-    {
-        switch (event->type)
-        {
-            case SDL_EVENT_QUIT:
-                return SDL_APP_SUCCESS;
-            case SDL_EVENT_KEY_DOWN:
-            case SDL_EVENT_KEY_UP:
-                _journal->call(&cradle_journal::key, event->key.key, event->type == SDL_EVENT_KEY_DOWN, event->key.mod);
-                break;
-            case SDL_EVENT_MOUSE_MOTION:
-                if(event->motion.state & SDL_BUTTON_LMASK)
-                    _journal->call(&cradle_journal::mouseDragged, event->motion.x, event->motion.y, event->motion.xrel, event->motion.yrel);
-                else
-                    _journal->call(&cradle_journal::mouseMoved, event->motion.x, event->motion.y, event->motion.xrel, event->motion.yrel);
-                break;
-            case SDL_EVENT_MOUSE_BUTTON_DOWN:
-            case SDL_EVENT_MOUSE_BUTTON_UP:
-                _journal->call(&cradle_journal::mouseButton, event->button.button, event->type == SDL_EVENT_MOUSE_BUTTON_DOWN, event->button.x, event->button.y);
-                break;
-            case SDL_EVENT_GAMEPAD_ADDED:
-            {
-                uint32 i;
-                for(i = 0; i < gamepads.size(); i++)
-                {
-                    if(gamepads[i].gamepad_id == event->gdevice.which)
-                        return SDL_APP_CONTINUE;
-                }
-                GamepadRef g;
-                g.gamepad = SDL_OpenGamepad(event->gdevice.which);
-                g.gamepad_id = event->gdevice.which;
-                gamepads.push_back(g);
-                
-                const char *gamepad_name = SDL_GetGamepadName(g.gamepad);
-                SDL_GamepadButtonLabel bl_south = SDL_GetGamepadButtonLabel(g.gamepad, SDL_GAMEPAD_BUTTON_SOUTH);
-                SDL_GamepadButtonLabel bl_east = SDL_GetGamepadButtonLabel(g.gamepad, SDL_GAMEPAD_BUTTON_EAST);
-                SDL_GamepadButtonLabel bl_west = SDL_GetGamepadButtonLabel(g.gamepad, SDL_GAMEPAD_BUTTON_WEST);
-                SDL_GamepadButtonLabel bl_north = SDL_GetGamepadButtonLabel(g.gamepad, SDL_GAMEPAD_BUTTON_NORTH);
 
-                char *mapping;
-                mapping = SDL_GetGamepadMapping(g.gamepad);
-                string gp_name(gamepad_name);
-                string gp_mapping(mapping);
-
-                _journal->call(&cradle_journal::gamepad_added, g.gamepad_id, gp_name, gp_mapping, uint32(bl_south), uint32(bl_east), uint32(bl_west), uint32(bl_north));
-                break;
-            }
-            case SDL_EVENT_GAMEPAD_REMOVED:
-            {
-                for(uint32 i = 0; i < gamepads.size(); i++)
-                {
-                    if(event->gdevice.which == gamepads[i].gamepad_id)
-                    {
-                        SDL_CloseGamepad(gamepads[i].gamepad);
-                        gamepads.erase(i);
-                        _journal->call(&cradle_journal::gamepad_removed, event->gdevice.which);
-                        break;
-                    }
-                }
-                break;
-            }
-            case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
-                _journal->call(&cradle_journal::gamepad_buttondown, event->gdevice.which, event->gbutton.button);
-                break;
-            case SDL_EVENT_GAMEPAD_BUTTON_UP:
-                _journal->call(&cradle_journal::gamepad_buttonup, event->gdevice.which, event->gbutton.button);
-                break;
-            case SDL_EVENT_GAMEPAD_AXIS_MOTION:
-            {
-                int32 axis = event->gaxis.axis;
-                _journal->call(&cradle_journal::gamepad_axis, event->gdevice.which, axis, event->gaxis.value < 0 ? float32(event->gaxis.value)/32768.0f : float32(event->gaxis.value)/32767.0f);
-                break;
-            }
-            case SDL_EVENT_WINDOW_RESIZED:
-                {
-                int w = event->window.data1;
-                int h = event->window.data2;
-                //logf(cradle, ("resize %d %d", w, h));
-                _journal->call(&cradle_journal::windowResized, w, h);
-                }
-                break;
-            case SDL_EVENT_JOYSTICK_AXIS_MOTION:
-            case SDL_EVENT_JOYSTICK_BUTTON_DOWN:
-            case SDL_EVENT_JOYSTICK_BUTTON_UP:
-            case SDL_EVENT_JOYSTICK_HAT_MOTION:
-            case SDL_EVENT_GAMEPAD_REMAPPED:
-                //logf(cradle, ("GP event: %d", event->type));
-
-                break;
-
-        }
-        if(A.G.quit)
-            return SDL_APP_SUCCESS;
-        else
-            return SDL_APP_CONTINUE;
-    }
-
-    void shutdown()
-    {
-        if(window)
-            SDL_DestroyWindow(window);
-    }
-
-    void get_canvas_size(int &_w, int &_h)
-    {
-        if(!window)
-            _w = _h = 0;
-        else
-            SDL_GetWindowSize(window, &_w, &_h);
-    }
-    
-    bool is_fullscreen()
-    {
-        return fullscreen;
-    }
-    
-    bool set_fullscreen(bool _fullscreen)
-    {
-        if(!window)
-            return false;
-        
-        fullscreen = _fullscreen;
-        SDL_SetWindowFullscreen(window, fullscreen);
-        if (!fullscreen)
-            SDL_SetWindowResizable(window, true);
-        return true;
-    }
-    
-    void present()
-    {
-        if(renderer)
-            SDL_RenderPresent(renderer);
-        else if(window)
-            SDL_GL_SwapWindow(window);
-    }
-    
     void color(const ColorI &_draw_color)
     {
         draw_color = _draw_color;
@@ -445,18 +173,6 @@ public:
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
     
-    void set_viewport(float32 x, float32 y, float32 w, float32 h)
-    {
-        dirty_viewport = true;
-        
-        viewport.x = x;
-        viewport.y = y;
-        viewport.w = w;
-        viewport.h = h;
-        //SDL_SetRenderViewport(renderer, &viewport);
-        glViewport(x, y, w, h);
-    }
-    
     void set_blend_mode(BlendMode _mode)
     {
         if(_mode != blend_mode)
@@ -465,6 +181,7 @@ public:
             blend_mode = _mode;
         }
     }
+
     
     void draw_prepare()
     {
@@ -533,7 +250,8 @@ private:
         glVertexPointer(2, GL_FLOAT, 0, &vertex_buffer[0]);
     }
     void _enable_array_properties(const vec2 *_v) {}
-    
+    void _enable_array_properties(const RenderVertex2 *_v) {}
+
     void _enable_array_properties(const RenderVertex2T *_v)
     {
         glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -573,6 +291,9 @@ private:
     {
         glDisableClientState(GL_VERTEX_ARRAY);
     }
+    void _disable_array_properties(const vec2 *) {}
+    void _disable_array_properties(const RenderVertex2 *) {}
+
     void _disable_array_properties(const RenderVertex2T *)
     {
         glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -647,6 +368,25 @@ private:
         }
         glEnd();
     }
+    template<class V> void _draw_gl_indexed_primitive(V *_verts, uint32 _vert_count, GLuint *indices, uint32 _index_count, uint32 _gl_primitive)
+    {
+        draw_prepare();
+        _enable_vertex_arrays(_verts, _vert_count);
+        _enable_array_properties(_verts);
+        glDrawElements(_gl_primitive, _index_count, GL_UNSIGNED_INT, indices);
+        _disable_vertex_arrays();
+        _disable_array_properties(_verts);
+
+        draw_prepare();
+        glBegin(_gl_primitive);
+        for(uint32 i = 0; i < _vert_count; i++)
+        {
+            _emit_vertex_properties(_verts + i);
+            _transform_and_emit_vertex(_verts + i);
+        }
+        glEnd();
+    }
+
 public:
     template<class V> void draw_line(const V &v1, const V &v2)
     {
@@ -673,37 +413,50 @@ public:
 
     template<class V> void draw_quad(V *_verts)
         { _draw_gl_primitive(_verts, 4, GL_QUADS); }
-    
-    template<class V> void draw_triangles(V *_verts, uint32 _vert_count)
+
+    template<class V> void enable_vertex_array(V *_verts, uint32 _vert_count)
     {
         draw_prepare();
         _enable_vertex_arrays(_verts, _vert_count);
         _enable_array_properties(_verts);
-        glDrawArrays(GL_TRIANGLES, 0, _vert_count);
+    }
+    
+    template<class V> void disable_vertex_array(V *_verts)
+    {
         _disable_vertex_arrays();
         _disable_array_properties(_verts);
+    }
+    
+    void draw_array_triangles(uint32 _vert_count)
+    {
+        glDrawArrays(GL_TRIANGLES, 0, _vert_count);
     }
 
-    template<class V> void draw_triangle_strip(V *_verts, uint32 _vert_count)
+    void draw_array_triangle_strip(uint32 _vert_count)
     {
-        draw_prepare();
-        _enable_vertex_arrays(_verts, _vert_count);
-        _enable_array_properties(_verts);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, _vert_count);
-        _disable_vertex_arrays();
-        _disable_array_properties(_verts);
     }
     
-    template<class V> void draw_triangles_indexed(V *_verts, uint32 _vert_count, GLuint *indices, uint32 _index_count)
+    void draw_array_triangles_indexed(GLuint *indices, uint32 _index_count)
     {
-        draw_prepare();
-        _enable_vertex_arrays(_verts, _vert_count);
-        _enable_array_properties(_verts);
         glDrawElements(GL_TRIANGLES, _index_count, GL_UNSIGNED_INT, indices);
-        _disable_vertex_arrays();
-        _disable_array_properties(_verts);
     }
-    
+
+    void draw_array_quads_indexed(GLuint *indices, uint32 _index_count)
+    {
+        glDrawElements(GL_QUADS, _index_count, GL_UNSIGNED_INT, indices);
+    }
+
+    void draw_array_line_loop_indexed(GLuint *indices, uint32 _index_count)
+    {
+        glDrawElements(GL_LINE_LOOP, _index_count, GL_UNSIGNED_INT, indices);
+    }
+
+    void draw_array_line_strip_indexed(GLuint *indices, uint32 _index_count)
+    {
+        glDrawElements(GL_LINE_STRIP, _index_count, GL_UNSIGNED_INT, indices);
+    }
+
     // _glVertex2fXF and _glVertexXF are temporary hacks for easing the porting process
     // these functions are intended to go away once all of the glBegin/glEnd bits are removed from AC
     void _glVertex2fXF(float32 x, float32 y)
@@ -823,5 +576,4 @@ public:
         set_blend_mode(BlendModeNone);
         glDisable(texture->m_target);
     }
-    
-} P;
+} C;

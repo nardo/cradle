@@ -196,6 +196,6 @@ struct cradle_test_journal : public cradle_journal
     void init()
     {
         A.UI.init();
-        A.UITest.activate();
+        A.UITestNetGame.activate();
     }
 } G;

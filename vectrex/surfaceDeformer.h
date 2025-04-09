@@ -1,4 +1,4 @@
-// The cradle library - copyright KAGR LLC. The use of this source code is governed by the license agreement(s) described in the "license.txt" file in this directory.
+// The vectrex library - copyright KAGR LLC. The use of this source code is governed by the license agreement(s) described in the "license.txt" file in this directory.
 
 class SurfaceDeformer
 {
@@ -139,9 +139,10 @@ public:
 
    void render()
     {
-       A.P.draw_triangles_indexed(mVerts, mXDim * mYDim, mIndices, (mXDim - 1) * (mYDim - 1) * 6);
-    }
-
+       A.C.enable_vertex_array(mVerts, mXDim * mYDim);
+       A.C.draw_array_triangles_indexed(mIndices, (mXDim - 1) * (mYDim - 1) * 6);
+       A.C.disable_vertex_array(mVerts);
+   }
 
    void setPosition(const Point & pos) { mPos = pos; }
    void setExtent(const Point & extent) { mExtent = extent; }

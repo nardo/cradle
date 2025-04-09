@@ -1,4 +1,47 @@
-// The cradle library - copyright KAGR LLC. The use of this source code is governed by the license agreement(s) described in the "license.txt" file in this directory.
+// The vectrex library - copyright KAGR LLC. The use of this source code is governed by the license agreement(s) described in the "license.txt" file in this directory.
+
+
+class TextureObject : public ref_object
+{
+    public:
+    GLuint         m_textureID;   // The GL texture ID
+   uint32         m_width;       // Image width
+   uint32         m_height;      // Image height
+   uint32         m_format;      // Image format type (GL_RGB, GL_RGBA)
+   uint32         m_type;        // Data type for pixel data (GL_BYTE, ...)
+   uint32         m_target;      // GL_TEXTURE_2D, ...
+    void glSet(uint32 index)
+    {
+        if(index == 0)
+            glBindTexture(GL_TEXTURE_2D, m_textureID);
+        else
+            glBindTexture(GL_TEXTURE0 + index, m_textureID);
+
+        // sets this as the active texture on unit index
+    }
+    void release()
+    {
+        if(m_textureID)
+        {
+            glDeleteTextures(1, &m_textureID);
+            m_textureID = 0;
+        }
+    }
+    TextureObject()
+    {
+        m_textureID = 0;
+        m_width = m_height = 0;
+    }
+    ~TextureObject()
+    {
+        if(m_textureID)
+            release();
+    }
+    uint32 getWidth() { return m_width; }
+    uint32 getHeight() { return m_height; }
+};
+
+typedef ref_ptr<TextureObject> TextureHandle;
 
 class TextureManager
 {

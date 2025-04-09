@@ -1,4 +1,4 @@
-// The cradle library - copyright KAGR LLC. The use of this source code is governed by the license agreement(s) described in the "license.txt" file in this directory.
+// The vectrex library - copyright KAGR LLC. The use of this source code is governed by the license agreement(s) described in the "license.txt" file in this directory.
 
 // These swept ellipsoid utility functions are derived from example code for: Collision Detection with Swept Spheres and Ellipsoids Copyright (C) 2003 Jorrit Rouwe distributed as free software - http://www.three14.demon.nl/sweptellipsoid/SweptEllipsoid.pdf
 //
