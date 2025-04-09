@@ -4,3 +4,6 @@
 [submodule "SDL_image"]
 	path = SDL_image
 	url = https://github.com/libsdl-org/SDL_image.git
+[submodule "decomposition-library"]
+	path = decomposition-library
+	url = https://github.com/nardo/decomposition-library
