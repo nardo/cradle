@@ -100,19 +100,20 @@ public:
            format = GL_RGBA;
        else if(texSurface->format == SDL_PIXELFORMAT_XRGB8888 || texSurface->format == SDL_PIXELFORMAT_ARGB8888)
        {
-           uint8 *srcPixels = (uint8 *) texSurface->pixels;
+           uint32 *srcPixels = (uint32 *) texSurface->pixels;
            modPixels = new uint8[texSurface->w * texSurface->h * 4];
            uint8 *dstPixels = modPixels;
            for(uint32 y = 0; y < texSurface->h; y++)
            {
                for(uint32 x = 0; x < texSurface->w; x++)
                {
-                   dstPixels[0] = srcPixels[1];
-                   dstPixels[1] = srcPixels[2];
-                   dstPixels[2] = srcPixels[3];
-                   dstPixels[3] = srcPixels[0];
+                   uint32 src = *srcPixels++;
+                   big_endian_to_host(src);
+                   dstPixels[0] = uint8(src >> 8);
+                   dstPixels[1] = uint8(src >> 16);
+                   dstPixels[2] = uint8(src >> 24);
+                   dstPixels[3] = uint8(src);
                    dstPixels += 4;
-                   srcPixels += 4;
                }
            }
            format = GL_RGBA;

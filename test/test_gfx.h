@@ -144,7 +144,7 @@ public:
         uint32 index_offset = test_poly_tree.add_vertices(&vert_data[0][0], num_verts);
         for(uint32 i = 0; i < num_polys; i++)
             test_poly_tree.add_indexed_poly(&poly_data[i][1], poly_data[i][0]);
-#if 0
+#if 1
         test_vectron.poly_tree(test_poly_tree);
 
 #else
@@ -159,6 +159,10 @@ public:
     }
     void render()
     {
+        polytron_fill<vec2> f;
+        f.set(test_vectron);
+        f.render_debug();
+        /*
         test_vectron.render_debug();
         polytron_outline<RenderVertex2CT> o;
         o.set(test_vectron, cur_width, cur_width);
@@ -174,7 +178,7 @@ public:
         {
             A.C.draw_array_quads_indexed(&o.indices[o.beams[b].index_start], o.beams[b].index_count);
         }
-        A.C.disable_vertex_array(&o.vertices[0]);
+        A.C.disable_vertex_array(&o.vertices[0]);*/
 
         Parent::render();
     }

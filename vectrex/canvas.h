@@ -357,6 +357,11 @@ private:
         glColor4ub(_v->c.red, _v->c.green, _v->c.blue, _v->c.alpha);
     }
     
+    void _emit_vertex_properties(const RenderVertex3C *_v)
+    {
+        glColor4ub(_v->c.red, _v->c.green, _v->c.blue, _v->c.alpha);
+    }
+
     template<class V> void _draw_gl_primitive(V *_verts, uint32 _vert_count, uint32 _gl_primitive)
     {
         draw_prepare();
@@ -455,6 +460,10 @@ public:
     void draw_array_line_strip_indexed(GLuint *indices, uint32 _index_count)
     {
         glDrawElements(GL_LINE_STRIP, _index_count, GL_UNSIGNED_INT, indices);
+    }
+    void draw_array_lines_indexed(GLuint *indices, uint32 _index_count)
+    {
+        glDrawElements(GL_LINES, _index_count, GL_UNSIGNED_INT, indices);
     }
 
     // _glVertex2fXF and _glVertexXF are temporary hacks for easing the porting process

@@ -92,6 +92,7 @@ template<class vertex_type> struct polytron_outline
             beams[b].index_start = indices.size();
             beams[b].index_count = 0;
             polytron::primitive &s = p.border_line_strips[b];
+            beams[b].length = s.length;
             
             // first, add all the default case vertices. We add two vertices for each vertex in the strip, the first extruded out by the vertex normal * out_width and the other extruded in (ie -normal * in_width).
             

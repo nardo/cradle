@@ -26,3 +26,4 @@ class Stream;
 #include "poly_tree.h"
 #include "polytron.h"
 #include "polytron_outline.h"
+#include "polytron_fill.h"

@@ -1,7 +1,7 @@
 // The vectrex library - copyright KAGR LLC. The use of this source code is governed by the license agreement(s) described in the "license.txt" file in this directory.
 
 /// The polytron class -- encapsulates poly soup - composed of a set of fill primitives (ie triangle lists) and perimiter border polygons that can either be either open or closed.
-/// polytron_outline objects are instanced from polytrons for perimeter beam rendering
+/// polytron_outline objects are instanced from polytrons for perimeter beam rendering, polytron_fill objects are instanced from polytrons for fill triangle rendering
 
 class polytron
 {
@@ -100,21 +100,31 @@ class polytron
         //    _recurse_count_tree_polys(tree.childrenPolygons[i], poly_count, poly_index_count);
     }
     
-    void _next_border_from_index_list(poly_tree::index_list &poly, uint32 &border_index, uint32 &index_base)
+    void _next_border_from_index_list(poly_tree::index_list &poly, uint32 &border_index, uint32 &index_base, bool hole)
     {
         border_line_strips[border_index].index_start = index_base;
         border_line_strips[border_index].vertex_count = poly.size() + 1;
-        for(uint32 i = 0; i < poly.size(); i++)
-            indices[index_base++] = poly[i];
-        indices[index_base++] = poly[0];
+
+        if(hole)
+        {
+            for(uint32 i = poly.size(); i--; )
+                indices[index_base++] = poly[i];
+            indices[index_base++] = poly[poly.size() - 1];
+        }
+        else
+        {
+            for(uint32 i = 0; i < poly.size(); i++)
+                indices[index_base++] = poly[i];
+            indices[index_base++] = poly[0];
+        }
         border_index++;
     }
     
     void _recurse_build_tree_polys(PolygonWithHolesTree &tree, uint32 &border_index, uint32 &index_base)
     {
-        _next_border_from_index_list(tree.vertexIndices, border_index, index_base);
+        _next_border_from_index_list(tree.vertexIndices, border_index, index_base, false);
         for(uint32 i = 0; i < tree.holes.size(); i++)
-            _next_border_from_index_list(tree.holes[i].vertexIndices, border_index, index_base);
+            _next_border_from_index_list(tree.holes[i].vertexIndices, border_index, index_base, true);
         //for(uint32 i = 0; i < tree.childrenPolygons.size(); i++)
         //    _recurse_build_tree_polys(tree.childrenPolygons[i], prim_index, index_base);
     }
