@@ -427,14 +427,14 @@ public:
         _disable_array_properties(_verts);
     }
     
-    void draw_array_triangles(uint32 _vert_count)
+    void draw_array_triangles(uint32 _vert_start, uint32 _vert_count)
     {
-        glDrawArrays(GL_TRIANGLES, 0, _vert_count);
+        glDrawArrays(GL_TRIANGLES, _vert_start, _vert_count);
     }
 
-    void draw_array_triangle_strip(uint32 _vert_count)
+    void draw_array_triangle_strip(uint32 _vert_start, uint32 _vert_count)
     {
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, _vert_count);
+        glDrawArrays(GL_TRIANGLE_STRIP, _vert_start, _vert_count);
     }
     
     void draw_array_triangles_indexed(GLuint *indices, uint32 _index_count)
