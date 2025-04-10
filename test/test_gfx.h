@@ -144,7 +144,7 @@ public:
         uint32 index_offset = test_poly_tree.add_vertices(&vert_data[0][0], num_verts);
         for(uint32 i = 0; i < num_polys; i++)
             test_poly_tree.add_indexed_poly(&poly_data[i][1], poly_data[i][0]);
-#if 1
+#if 0
         test_vectron.poly_tree(test_poly_tree);
 
 #else
@@ -154,7 +154,7 @@ public:
         verts[2].set(480,300);
         verts[3].set(250, 450);
         verts[4].set(72, 400);
-        test_vectron.convex_poly(verts, 5, true);
+        test_vectron.convex_poly(verts, 5, false);
 #endif
     }
     void render()

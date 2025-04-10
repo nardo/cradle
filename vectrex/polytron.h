@@ -207,10 +207,16 @@ class polytron
                 uint32 cur_index = indices[index_index];
                 vec2 cur_vert(vertices[cur_index].x, vertices[cur_index].y);
                 // stuff the vector from prev to current into the normal for this vertex, and the length of that vector into the t value
-                index_properties[index_index].v = cur_vert - prev_vert;
-                index_properties[index_index].t = index_properties[index_index].v.len();
-
-                perimeter += index_properties[index_index].t;
+                vec2 edge_vec = cur_vert - prev_vert;
+                float32 len = edge_vec.len();
+                if(len)
+                    edge_vec *= 1 / len;
+                else
+                    edge_vec.set(1, 0);
+                
+                index_properties[index_index].v = edge_vec;
+                index_properties[index_index].t = len;
+                perimeter += len;
                 prev_vert = cur_vert;
             }
             
@@ -219,13 +225,12 @@ class polytron
             // also, in the next step, we caclulate the vertex normals walking back from the end of the poly.
             // if this is a loop, we start at the end vertex - 1 and stuff the last vertex's normal in from the first. Otherwise we start at the end vertex and copy the delta (same as how the beginning is handled)
             
-            float32 next_t = index_properties[end_index_index].t;
             vec2 next_v = index_properties[end_index_index].v;
 
             if(loop)
             {
                 index_properties[p.index_start].v = next_v;
-                index_properties[p.index_start].t = next_t;
+                index_properties[p.index_start].t = index_properties[end_index_index].t;
                 j = p.vertex_count - 1;
             }
             else
@@ -236,19 +241,10 @@ class polytron
                 j = p.vertex_count;
             }
 
-            if(next_t)
-                next_v *= 1/next_t;
-            else
-                next_v.set(1,0);
             while(j--)
             {
                 uint32 index_index = p.index_start + j;
-                float32 cur_t = index_properties[index_index].t;
                 vec2 cur_v = index_properties[index_index].v;
-                if(cur_t)
-                    cur_v *= 1/cur_t;
-                else
-                    cur_v.set(1,0);
 
                 // at this point next_v and cur_v have the edge unit vector
                 vec2 next_n(-next_v.y, next_v.x);
@@ -276,7 +272,7 @@ class polytron
                 // n.x * determinant = b2*c1 - b1*c2 = -cur_v.x * c1 + next_v.x * c2
                 // n.y * determinant = a1*c2 - a2*c1 = next_v.y * c2 - cur_v.y * c1
                 float32 determinant = cur_v.y * next_v.x - next_v.y * cur_v.x;
-                if(determinant == 0)
+                if(mFabs(determinant) < __EQUAL_CONST_F)
                     index_properties[index_index].n = cur_n;
                 else
                 {
