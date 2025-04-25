@@ -27,3 +27,5 @@ class Stream;
 #include "polytron.h"
 #include "polytron_outline.h"
 #include "polytron_fill.h"
+#include "wall_renderer.h"
+#include "radial_shadows.h"

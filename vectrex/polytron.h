@@ -6,16 +6,12 @@
 class polytron
 {
     public:
-    enum primitive_type
-    {
-        line_strip,
-        triangle_list,
-    };
     struct primitive
     {
         uint32 index_start;
         uint32 vertex_count;
         float32 length; // length of line strips
+        Rect bounds;
         
         primitive()
         {
@@ -30,20 +26,20 @@ class polytron
         float t;
     };
     
-    primitive fill_triangles;
+    array<primitive> fill_triangles;
     array<primitive> border_line_strips;
     array<uint32> indices;
     array<index_prop> index_properties;
     array<vec2> vertices;
-    Rect root_bounds;
         
     void clear()
     {
         border_line_strips.clear();
+        fill_triangles.clear();
         indices.clear();
         index_properties.clear();
         vertices.clear();
-        fill_triangles.vertex_count = 0;
+        fill_triangles.clear();
     }
     
     void convex_poly(const vec2 *bounds, uint32 vertex_count, bool closed = true)
@@ -53,16 +49,18 @@ class polytron
         
         // simple shapes will have two primitives - one triangle list for the fill, and one either open or closed polygon for the perimiter.
         border_line_strips.resize(1);
+        fill_triangles.resize(1);
+        
         vertices.resize(vertex_count);
         
-        fill_triangles.index_start = 0;
-        fill_triangles.vertex_count = 3 * (vertex_count - 2);
-        border_line_strips[0].index_start = fill_triangles.vertex_count;
+        fill_triangles[0].index_start = 0;
+        fill_triangles[0].vertex_count = 3 * (vertex_count - 2);
+        border_line_strips[0].index_start = fill_triangles[0].vertex_count;
         border_line_strips[0].vertex_count = vertex_count;
         if(closed)
             border_line_strips[0].vertex_count++;
         
-        uint32 index_count = fill_triangles.vertex_count + border_line_strips[0].vertex_count;
+        uint32 index_count = fill_triangles[0].vertex_count + border_line_strips[0].vertex_count;
         indices.resize(index_count);
         index_properties.resize(index_count);
         
@@ -84,9 +82,12 @@ class polytron
         }
         if(closed)
             indices[index_base] = indices[ border_line_strips[0].index_start];
+        Rect root_bounds;
         root_bounds.min = root_bounds.max = bounds[0];
         for(uint32 i = 1; i < vertex_count; i++)
             root_bounds.unionPoint(bounds[i]);
+        fill_triangles[0].bounds = root_bounds;
+        border_line_strips[0].bounds = root_bounds;
         compute_perimeters_and_normals();
     }
     
@@ -102,8 +103,9 @@ class polytron
     
     void _next_border_from_index_list(poly_tree::index_list &poly, uint32 &border_index, uint32 &index_base, bool hole)
     {
-        border_line_strips[border_index].index_start = index_base;
-        border_line_strips[border_index].vertex_count = poly.size() + 1;
+        primitive &strip = border_line_strips[border_index];
+        strip.index_start = index_base;
+        strip.vertex_count = poly.size() + 1;
 
         if(hole)
         {
@@ -116,6 +118,13 @@ class polytron
             for(uint32 i = 0; i < poly.size(); i++)
                 indices[index_base++] = poly[i];
             indices[index_base++] = poly[0];
+        }
+        vec2 v0 = vertices[indices[strip.index_start]];
+        strip.bounds.set(v0,v0);
+        for(uint32 i = 1; i < strip.vertex_count; i++)
+        {
+            v0 = vertices[indices[strip.index_start + i]];
+            strip.bounds.unionPoint(v0);
         }
         border_index++;
     }
@@ -139,13 +148,11 @@ class polytron
 
         assert(verts.size() > 0);
         vertices.resize(verts.size());
-        root_bounds.min = root_bounds.max = Point(verts[0][0], verts[0][1]);
-        vertices[0].set(verts[0][0], verts[0][1]);
-        for(uint32 i = 1; i < vertices.size(); i++)
+        fill_triangles.resize(tris.size());
+        for(uint32 i = 0; i < vertices.size(); i++)
         {
             Point p(verts[i][0], verts[i][1]);
             vertices[i] = p;
-            root_bounds.unionPoint(p);
         }
         uint32 triangle_count = 0;
         for(uint32 i = 0; i < tris.size(); i++)
@@ -159,18 +166,30 @@ class polytron
         uint32 index_count = triangle_count * 3 + poly_index_count;
         indices.resize(index_count);
         index_properties.resize(index_count);
-        
-        fill_triangles.index_start = 0;
-        fill_triangles.vertex_count = triangle_count * 3;
+                
         uint32 index_base = 0;
         for(uint32 i = 0; i < tris.size(); i++)
         {
-            for(uint32 j = 0; j < tris[i].size(); j++)
+            fill_triangles[i].index_start = index_base;
+            fill_triangles[i].vertex_count = tris[i].size() * 3;
+            if(fill_triangles[i].vertex_count)
             {
-                glm::ivec3 &tri = tris[i][j];
-                indices[index_base++] = tri[0];
-                indices[index_base++] = tri[1];
-                indices[index_base++] = tri[2];
+                for(uint32 j = 0; j < tris[i].size(); j++)
+                {
+                    glm::ivec3 &tri = tris[i][j];
+                    indices[index_base++] = tri[0];
+                    indices[index_base++] = tri[1];
+                    indices[index_base++] = tri[2];
+                }
+                uint32 idx = fill_triangles[i].index_start;
+                Rect &b = fill_triangles[i].bounds;
+                vec2 p = vertices[indices[idx]];
+                b.set(p,p);
+                for(++idx; idx < fill_triangles[i].index_start + fill_triangles[i].vertex_count; idx++)
+                {
+                    p = vertices[indices[idx]];
+                    b.unionPoint(p);
+                }
             }
         }
         uint32 border_index = 0;
@@ -325,12 +344,18 @@ class polytron
         
         A.C.enable_vertex_array(&vertices[0], vertices.size());
 
-        A.C.colorf(0.33, 0.33, 0.33, 1);
-        A.C.draw_array_triangles_indexed(&indices[fill_triangles.index_start], fill_triangles.vertex_count);
-        
-        A.C.colorf(0.66, 0.66, 0.66, 1);
-        for(uint32 i = 0; i < fill_triangles.vertex_count; i += 3)
-            A.C.draw_array_line_loop_indexed(&indices[fill_triangles.index_start + i], 3);
+        for(uint32 fill = 0; fill < fill_triangles.size(); fill++)
+        {
+            primitive &p = fill_triangles[fill];
+            A.C.colorf(0.33, 0.33, 0.33, 1);
+            A.C.draw_array_triangles_indexed(&indices[p.index_start], p.vertex_count);
+            
+            A.C.colorf(0.66, 0.66, 0.66, 1);
+            for(uint32 i = 0; i < p.vertex_count; i += 3)
+                A.C.draw_array_line_loop_indexed(&indices[p.index_start + i], 3);
+            A.C.colorf(0.8, 0.8, 1, 1);
+            
+        }
         
         glLineWidth(3);
         A.C.colorf(1, 1, 0, 1);

@@ -7,7 +7,7 @@ template <class vertex_type> class polytron_fill
 public:
     array<vertex_type> vertices;
     array<uint32> indices;
-    
+    array<polytron::primitive> tri_lists;
     template<class vt> void fill_vertex(vt &v, const vec2 &p)
     {
         v.p.x = p.x;
@@ -23,6 +23,10 @@ public:
     {
         vertices.clear();
         indices.clear();
+        tri_lists.clear();
+        if(!p.fill_triangles.size())
+            return;
+        
         const uint32 invalid_index = 0xFFFFFFFF;
         
         // first pass identifies which vertices are referenced at all by the polytron's fill triangles:
@@ -31,25 +35,33 @@ public:
         vertex_remap.resize(p.vertices.size());
         for(uint32 i = 0; i < p.vertices.size(); i++)
             vertex_remap[i] = invalid_index;
-        for(uint32 i = 0; i < p.fill_triangles.vertex_count; i++)
+        
+        tri_lists.resize(p.fill_triangles.size());
+        for(uint32 ft = 0; ft < p.fill_triangles.size(); ft++)
         {
-            uint32 index_index = p.fill_triangles.index_start + i;
-            uint32 vertex_index = p.indices[index_index];
-            if(vertex_remap[vertex_index] == invalid_index)
-                vertex_remap[vertex_index] = used_vertex_count++;
+            polytron::primitive &tris = p.fill_triangles[ft];
+            tri_lists[ft] = tris;
+            for(uint32 i = 0; i < tris.vertex_count; i++)
+            {
+                uint32 index_index = tris.index_start + i;
+                uint32 vertex_index = p.indices[index_index];
+                if(vertex_remap[vertex_index] == invalid_index)
+                    vertex_remap[vertex_index] = used_vertex_count++;
+            }
         }
         vertices.resize(used_vertex_count);
         // now copy over the vertex data
         for(uint32 i = 0; i < p.vertices.size(); i++)
             if(vertex_remap[i] != invalid_index)
                 fill_vertex(vertices[vertex_remap[i]], p.vertices[i]);
-        // and now the indices...
 
-        indices.reserve(p.fill_triangles.vertex_count);
-        for(uint32 i = 0; i < p.fill_triangles.vertex_count; i++)
+        // and now the indices...
+        polytron::primitive &t = tri_lists.last();
+        uint32 total_index_count = t.index_start + t.vertex_count;
+        indices.reserve(total_index_count);
+        for(uint32 i = 0; i < total_index_count; i++)
         {
-            uint32 index_index = p.fill_triangles.index_start + i;
-            uint32 remap_index = vertex_remap[p.indices[index_index]];
+            uint32 remap_index = vertex_remap[p.indices[i]];
             indices.push_back(remap_index);
         }
     }

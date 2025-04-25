@@ -1,6 +1,6 @@
 // The core library - copyright KAGR LLC, portions copyright GarageGames. The use of this source code is governed by the MIT software license described in the "license.txt" file in this directory.
 
-template <uint32 alignment = 4> class arena_allocator
+template <uint32 alignment = 8> class arena_allocator
 {
 public:
 	arena_allocator(page_allocator *zone)

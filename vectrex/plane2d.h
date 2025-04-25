@@ -8,7 +8,7 @@ class Plane2D
 public:
   float32 mCoef[3];
 
-  enum {
+  enum plane_test_result {
      kSpanning = 0,
      kInFront,
      kInBack,
@@ -56,7 +56,7 @@ public:
      return c / d;
   }
 
-  int32 classifyPoint(const Point & pnt, const float32 epsilon = kPlane2DEpsilon) const
+    plane_test_result classifyPoint(const Point & pnt, const float32 epsilon = kPlane2DEpsilon) const
   {
      float32 c = (mCoef[0] * pnt.x) + (mCoef[1] * pnt.y) + mCoef[2];
      if(c > epsilon)
@@ -67,10 +67,10 @@ public:
         return kSpanning;
   }
 
-  int32 classifyLine(const LineSegment & line)
+    plane_test_result classifyLine(const LineSegment & line)
    {
-      int32 a = classifyPoint(line.mP0);
-      int32 b = classifyPoint(line.mP1);
+        plane_test_result a = classifyPoint(line.mP0);
+        plane_test_result b = classifyPoint(line.mP1);
 
       // Point on line:
       if(a == kSpanning)
@@ -93,7 +93,7 @@ public:
       return a;
    }
 
-  int32 splitLine(const LineSegment & line, LineSegment & front, LineSegment & back)
+    plane_test_result splitLine(const LineSegment & line, LineSegment & front, LineSegment & back)
    {
       Plane2D p(line);
 
@@ -119,8 +119,8 @@ public:
          crossY = (-mCoef[0] * p.mCoef[2] + mCoef[2] * p.mCoef[0]) / div;
       }
 
-      int32 a = classifyPoint(line.mP0);
-      int32 b = classifyPoint(line.mP1);
+        plane_test_result a = classifyPoint(line.mP0);
+        plane_test_result b = classifyPoint(line.mP1);
 
       // No front or back:
       if(a == kSpanning && b == kSpanning)

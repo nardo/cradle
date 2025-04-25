@@ -442,6 +442,11 @@ public:
         glDrawArrays(GL_TRIANGLE_STRIP, _vert_start, _vert_count);
     }
     
+    void draw_array_quads(uint32 _vert_start, uint32 _vert_count)
+    {
+        glDrawArrays(GL_QUADS, _vert_start, _vert_count);
+    }
+    
     void draw_array_triangles_indexed(GLuint *indices, uint32 _index_count)
     {
         glDrawElements(GL_TRIANGLES, _index_count, GL_UNSIGNED_INT, indices);
