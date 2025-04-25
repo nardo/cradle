@@ -32,7 +32,8 @@ template<class vertex_type> struct polytron_outline
     
     template<class vt> void fill_vertex(vt &v, const vec2 &p, float32 tex, float32 t)
     {
-        v.p = p;
+        v.p.x = p.x;
+        v.p.y = p.y;
         v.t.x = tex;
         v.t.y = t;
     }

@@ -7,6 +7,7 @@ struct wall_renderer
 {
     poly_tree tree;
     polytron_fill<RenderVertex3T> fill;
+    polytron_outline<RenderVertex3T> top_outline;
     polytron wallytron;
     
     // extruded vertex and index data for the walls
@@ -14,6 +15,7 @@ struct wall_renderer
     array<RenderVertex2CT> outline_quad_verts;
     array<uint32> upper_wall_quads;
     array<uint32> lower_wall_quads;
+    TextureHandle top_outline_texture;
     Rect bounds;
     bool have_big_poly;
     enum
@@ -204,7 +206,7 @@ struct wall_renderer
         }
     }
     
-    void construct_walls_and_outlines(vec2 center_pos, float32 top_z, float32 outline_z, float32 bottom_z, float32 outline_width)
+    void construct_walls_and_outlines(vec2 center_pos, float32 top_z, float32 outline_z, float32 bottom_z, float32 outline_width, float32 top_outline_inset)
     {
         uint32 save_vertex_count = wallytron.vertices.size();
         radial_visibility_clipper c(A.G._context, wallytron, 1);
@@ -308,22 +310,27 @@ struct wall_renderer
             seg[o[2]].t.set(1, t1y);
             seg[o[3]].t.set(1, t0y);
         }
-        /*
         
+        // finally, construct the top polytron_outline and fix up its vertices
+        top_outline.set(wallytron, top_outline_inset, 0);
         // set up the barrier outline vert color and tex coords. We'll animate the tex coords in the idle method
-        for(uint32 b = 0; b < outline.beams.size(); b++)
+        for(uint32 b = 0; b < top_outline.beams.size(); b++)
         {
-            polytron_outline<RenderVertex2CT>::beam &beam = outline.beams[b];
+            polytron_outline<RenderVertex3T>::beam &beam = top_outline.beams[b];
             for(uint32 v = beam.vertex_start; v < beam.vertex_start + beam.vertex_count; v++ )
             {
-                RenderVertex2CT &vert = outline.vertices[v];
-                float32 alpha = 1 - vert.t.x;
+                RenderVertex3T &vert = top_outline.vertices[v];
                 float32 d = vert.t.y * beam.length / float32(BarrierOutlineTextureWorldSize);
+                vert.t.x = 0.75 * vert.t.x;
                 vert.t.y = d;
+                vert.p.z = top_z;
+                /*
+                float32 alpha = 1 - vert.t.x;
                 Color c(1-alpha, 0, alpha);
-                vert.c.set(c, alpha);
+                vert.c.set(c, alpha);*/
+                
             }
-        }*/
+        }
         
         wallytron.vertices.resize(save_vertex_count);
     }
@@ -339,37 +346,34 @@ struct wall_renderer
         c.render_clipped_edges();
     }
     
-    void render(vec2 center_pos, bool render_tex = true, bool test_z = true)
+    static float32 wall_top_outline_ramp_callback(float32 dist, float32 radius, float32 f)
     {
-        if(test_z)
-        {
-            glDepthMask(GL_TRUE);
-            glEnable(GL_DEPTH_TEST);
-            glDepthFunc(GL_LESS);
-        }
-        // test code to render the barrier polytron fill
-        //barrier_polytron.render_debug();
+       if(dist <= f)
+          return 1.f;
+
+        return (1.f - (dist / radius));
+    }
+
+    void render(vec2 center_pos)
+    {
+        glDepthMask(GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
+
+        // first render the wall top texture
         A.C.set_blend_mode(BlendModeNone);
-        
-        if(render_tex)
-        {
-            glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D,
-                          A.GR.circuitboardTexture->m_textureID);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                            GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
-                            GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-                            GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
-                            GL_REPEAT);
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-        }
-        else
-        {
-            A.C.colorf(0.75, 0.75, 0.75);
-        }
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D,
+                      A.GR.circuitboardTexture->m_textureID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                        GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+                        GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+                        GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+                        GL_REPEAT);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
         A.C.enable_vertex_array(&fill.vertices[0], fill.vertices.size());
         for(uint32 i = 0; i < fill.tri_lists.size(); i++)
@@ -377,9 +381,42 @@ struct wall_renderer
             A.C.draw_array_triangles_indexed(&fill.indices[fill.tri_lists[i].index_start], fill.tri_lists[i].vertex_count);
         }
         A.C.disable_vertex_array(&fill.vertices[0]);
-        if(render_tex)
-            glDisable(GL_TEXTURE_2D);
+        glDisable(GL_TEXTURE_2D);
 
+        // next, the wall top outline:
+        if(!top_outline_texture.is_valid())
+        {
+            top_outline_texture = createFalloffTextureRGBA(32, -1, wall_top_outline_ramp_callback, false);
+        }
+
+        A.C.set_blend_mode(BlendModeBlend);
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D,
+                      top_outline_texture->m_textureID);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                        GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+                        GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
+                        GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
+                        GL_REPEAT);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        glDisable(GL_DEPTH_TEST);
+
+        A.C.colorf(0.7, 0.7, 1);
+        A.C.enable_vertex_array(&top_outline.vertices[0], top_outline.vertices.size());
+        for(uint32 b = 0; b < top_outline.beams.size(); b++)
+        {
+            A.C.draw_array_quads_indexed(&top_outline.indices[top_outline.beams[b].index_start], top_outline.beams[b].index_count);
+        }
+        A.C.disable_vertex_array(&top_outline.vertices[0]);
+        A.C.set_blend_mode(BlendModeNone);
+        glDisable(GL_TEXTURE_2D);
+
+        glEnable(GL_DEPTH_TEST);
+
+        
         A.C.set_blend_mode(BlendModeBlend);
         glEnable(GL_CULL_FACE);
         glCullFace(GL_FRONT);
@@ -418,32 +455,10 @@ struct wall_renderer
         glDisable(GL_TEXTURE_2D);
         A.C.set_blend_mode(BlendModeNone);
 #endif
-        if(test_z)
-        {
-            glDisable(GL_DEPTH_TEST);
-            glDepthMask(GL_FALSE);
-            glDepthFunc(GL_ALWAYS);
-        }
+        glDisable(GL_DEPTH_TEST);
+        glDepthMask(GL_FALSE);
+        glDepthFunc(GL_ALWAYS);
 
-        /*for(uint32 outline_index = 0; outline_index < barrier_outlines.size(); outline_index++)
-        {
-            polytron_outline<RenderVertex2CT> &o = barrier_outlines[outline_index];
-
-            for (uint32 i = 0; i < o.vertices.size(); i++)
-            {
-                RenderVertex2CT &v = o.vertices[i];
-                Color c(v.t.x, v.t.y, 0);
-                v.c.set(c, 0.5);
-            }
-            A.C.set_blend_mode(BlendModeBlend);
-            A.C.enable_vertex_array(&o.vertices[0], o.vertices.size());
-            for(uint32 b = 0; b < o.beams.size(); b++)
-            {
-                A.C.draw_array_quads_indexed(&o.indices[o.beams[b].index_start], o.beams[b].index_count);
-            }
-            A.C.disable_vertex_array(&o.vertices[0]);
-            A.C.set_blend_mode(BlendModeNone);
-        }*/
 
         Rect r(center_pos, center_pos);
         r.expand(vec2(50,50));
